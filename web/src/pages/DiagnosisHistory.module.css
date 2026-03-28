@@ -1,0 +1,102 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-md);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.record {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.recordHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.recordHeader:hover {
+  background: var(--color-bg-gray);
+}
+
+.recordSummary {
+  flex: 1;
+  min-width: 0;
+}
+
+.recordTime {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-xs);
+}
+
+.recordSymptoms {
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arrow {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  margin-left: var(--spacing-sm);
+  transition: transform 0.2s;
+}
+
+.arrowExpanded {
+  composes: arrow;
+  transform: rotate(90deg);
+}
+
+.recordDetail {
+  padding: 0 var(--spacing-md) var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.detailSection {
+  margin-top: var(--spacing-md);
+}
+
+.detailLabel {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-xs);
+}
+
+.detailValue {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+@media (min-width: 768px) {
+  .page {
+    padding: var(--spacing-xl);
+  }
+}

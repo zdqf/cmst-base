@@ -1,4 +1,4 @@
-import styles from './Loading.module.css'
+import { Spin } from 'antd'
 
 interface LoadingProps {
   fullscreen?: boolean
@@ -6,8 +6,14 @@ interface LoadingProps {
 
 export default function Loading({ fullscreen = false }: LoadingProps) {
   return (
-    <div className={fullscreen ? styles.fullscreen : styles.inline}>
-      <div className={styles.spinner} />
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: fullscreen ? 0 : 48,
+      minHeight: fullscreen ? '100vh' : 'auto',
+    }}>
+      <Spin size="large" />
     </div>
   )
 }

@@ -1,32 +1,21 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useForm, consultationValidationRules } from '../hooks/useForm'
+import { Card, Form, Input, Button, Typography, Alert, Space, Tag } from 'antd'
+import { MessageOutlined, UserOutlined, PhoneOutlined, FileTextOutlined, SendOutlined } from '@ant-design/icons'
+import { motion } from 'framer-motion'
 import { submitConsultation } from '../api/consultation'
-import ErrorMessage from '../components/ErrorMessage'
 import type { ConsultationRequest } from '../types'
-import styles from './Consultation.module.css'
 
-const initialValues: ConsultationRequest = {
-  name: '',
-  contact: '',
-  subject: '',
-  description: '',
-}
+const { Title, Text } = Typography
+const { TextArea } = Input
 
 export default function Consultation() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const { values, errors, touched, handleChange, handleBlur, validate } =
-    useForm<ConsultationRequest>(initialValues, consultationValidationRules)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validate()) return
-
-    setLoading(true)
-    setError(null)
+  const handleSubmit = async (values: ConsultationRequest) => {
+    setLoading(true); setError(null)
     try {
       const result = await submitConsultation(values)
       navigate('/consultation/success', { state: { result } })
@@ -38,88 +27,52 @@ export default function Consultation() {
   }
 
   return (
-    <div className={styles.page}>
-      <h1 className={styles.title}>在线咨询</h1>
-
-      <form onSubmit={handleSubmit}>
-        {error && (
-          <div className={styles.errorWrap}>
-            <ErrorMessage message={error} />
-          </div>
-        )}
-
-        <div className={styles.field}>
-          <label className={`${styles.label} ${styles.required}`}>姓名</label>
-          <input
-            className={`${styles.input} ${touched.name && errors.name ? styles.inputError : ''}`}
-            type="text"
-            placeholder="请输入姓名"
-            maxLength={50}
-            value={values.name}
-            onChange={(e) => handleChange('name', e.target.value)}
-            onBlur={() => handleBlur('name')}
-          />
-          {touched.name && errors.name && (
-            <div className={styles.fieldError}>{errors.name}</div>
-          )}
+    <div style={{ maxWidth: 700, margin: '0 auto', padding: '24px 24px 48px' }}>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <div style={{
+          background: 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)',
+          borderRadius: 16, padding: '32px 24px', marginBottom: 24, textAlign: 'center',
+        }}>
+          <MessageOutlined style={{ fontSize: 48, color: '#6a1b9a', marginBottom: 12 }} />
+          <Title level={2} style={{ margin: 0, color: '#6a1b9a' }}>在线咨询</Title>
+          <Text type="secondary" style={{ fontSize: 15 }}>专业中医师为您提供一对一咨询服务</Text>
         </div>
 
-        <div className={styles.field}>
-          <label className={`${styles.label} ${styles.required}`}>联系方式</label>
-          <input
-            className={`${styles.input} ${touched.contact && errors.contact ? styles.inputError : ''}`}
-            type="text"
-            placeholder="请输入联系方式"
-            maxLength={50}
-            value={values.contact}
-            onChange={(e) => handleChange('contact', e.target.value)}
-            onBlur={() => handleBlur('contact')}
-          />
-          {touched.contact && errors.contact && (
-            <div className={styles.fieldError}>{errors.contact}</div>
-          )}
-        </div>
+        {error && <Alert type="error" message={error} showIcon closable style={{ marginBottom: 16, borderRadius: 8 }} />}
 
-        <div className={styles.field}>
-          <label className={`${styles.label} ${styles.required}`}>咨询主题</label>
-          <input
-            className={`${styles.input} ${touched.subject && errors.subject ? styles.inputError : ''}`}
-            type="text"
-            placeholder="请输入咨询主题"
-            maxLength={100}
-            value={values.subject}
-            onChange={(e) => handleChange('subject', e.target.value)}
-            onBlur={() => handleBlur('subject')}
-          />
-          {touched.subject && errors.subject && (
-            <div className={styles.fieldError}>{errors.subject}</div>
-          )}
-        </div>
+        <Card style={{ borderRadius: 16, border: 'none' }}>
+          <Form layout="vertical" onFinish={handleSubmit} size="large">
+            <Form.Item name="name" label="姓名" rules={[{ required: true, message: '请填写姓名' }, { max: 50, message: '不超过 50 字' }]}>
+              <Input prefix={<UserOutlined style={{ color: '#999' }} />} placeholder="请输入姓名" style={{ borderRadius: 10 }} />
+            </Form.Item>
 
-        <div className={styles.field}>
-          <label className={`${styles.label} ${styles.required}`}>详细描述</label>
-          <textarea
-            className={`${styles.textarea} ${touched.description && errors.description ? styles.inputError : ''}`}
-            placeholder="请详细描述您的咨询内容"
-            maxLength={1000}
-            value={values.description}
-            onChange={(e) => handleChange('description', e.target.value)}
-            onBlur={() => handleBlur('description')}
-          />
-          <div className={styles.charCount}>{values.description.length}/1000</div>
-          {touched.description && errors.description && (
-            <div className={styles.fieldError}>{errors.description}</div>
-          )}
-        </div>
+            <Form.Item name="contact" label="联系方式" rules={[{ required: true, message: '请填写联系方式' }, { max: 50, message: '不超过 50 字' }]}>
+              <Input prefix={<PhoneOutlined style={{ color: '#999' }} />} placeholder="请输入手机号或微信号" style={{ borderRadius: 10 }} />
+            </Form.Item>
 
-        <button
-          type="submit"
-          className={styles.submitBtn}
-          disabled={loading}
-        >
-          {loading ? '提交中...' : '提交咨询'}
-        </button>
-      </form>
+            <Form.Item name="subject" label="咨询主题" rules={[{ required: true, message: '请填写咨询主题' }, { max: 100, message: '不超过 100 字' }]}>
+              <Input prefix={<FileTextOutlined style={{ color: '#999' }} />} placeholder="请输入咨询主题" style={{ borderRadius: 10 }} />
+            </Form.Item>
+
+            <Form.Item name="description" label="详细描述" rules={[{ required: true, message: '请填写详细描述' }, { max: 1000, message: '不超过 1000 字' }]}>
+              <TextArea rows={5} placeholder="请详细描述您的咨询内容..." showCount maxLength={1000} style={{ borderRadius: 10 }} />
+            </Form.Item>
+
+            <Form.Item>
+              <Button type="primary" htmlType="submit" block loading={loading} icon={<SendOutlined />}
+                style={{ height: 48, borderRadius: 12, fontSize: 16, fontWeight: 600 }}>
+                {loading ? '提交中...' : '提交咨询'}
+              </Button>
+            </Form.Item>
+          </Form>
+        </Card>
+
+        <div style={{ marginTop: 24, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Tag color="green" style={{ padding: '4px 12px' }}>🕐 工作日 9:00-18:00</Tag>
+          <Tag color="blue" style={{ padding: '4px 12px' }}>💬 24小时内回复</Tag>
+          <Tag color="purple" style={{ padding: '4px 12px' }}>🔒 信息保密</Tag>
+        </div>
+      </motion.div>
     </div>
   )
 }

@@ -20,6 +20,8 @@ import Cart from './pages/Cart'
 import OrderConfirm from './pages/OrderConfirm'
 import OrderList from './pages/OrderList'
 import Profile from './pages/Profile'
+import Membership from './pages/Membership'
+import About from './pages/About'
 
 export default function App() {
   return (
@@ -38,6 +40,8 @@ export default function App() {
             <Route path="/herbs/:id" element={<HerbDetail />} />
             <Route path="/products" element={<ProductList />} />
             <Route path="/products/:id" element={<ProductDetail />} />
+            <Route path="/membership" element={<Membership />} />
+            <Route path="/about" element={<About />} />
 
             {/* Auth-required pages */}
             <Route element={<AuthGuard />}>

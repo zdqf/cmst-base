@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import styles from './EmptyState.module.css'
+import { Empty, Button } from 'antd'
 
 interface EmptyStateProps {
   message: string
@@ -9,13 +9,12 @@ interface EmptyStateProps {
 
 export default function EmptyState({ message, actionText, actionLink }: EmptyStateProps) {
   return (
-    <div className={styles.container}>
-      <p className={styles.message}>{message}</p>
+    <Empty description={message} style={{ padding: 48 }}>
       {actionText && actionLink && (
-        <Link to={actionLink} className={styles.action}>
-          {actionText}
+        <Link to={actionLink}>
+          <Button type="primary">{actionText}</Button>
         </Link>
       )}
-    </div>
+    </Empty>
   )
 }

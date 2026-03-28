@@ -1,108 +1,133 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Card, Form, Input, Button, Typography, Space, message, Divider } from 'antd'
+import { MobileOutlined, SafetyOutlined, LoginOutlined } from '@ant-design/icons'
+import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
-import { useForm, validatePhone } from '../hooks/useForm'
-import styles from './Login.module.css'
+import { LogoIcon, WaveDecoration, HerbLeafIcon } from '../assets/icons'
 
-interface LoginForm {
-  phone: string
-  code: string
-}
-
-const phoneRules = {
-  phone: (value: string) => {
-    if (!value || !value.trim()) return '请输入手机号'
-    if (!validatePhone(value)) return '手机号须为 11 位数字'
-    return undefined
-  },
-  code: (value: string) => {
-    if (!value || !value.trim()) return '请输入验证码'
-    return undefined
-  },
-}
+const { Title, Text, Paragraph } = Typography
 
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const { values, errors, touched, handleChange, handleBlur, validate } =
-    useForm<LoginForm>({ phone: '', code: '' }, phoneRules)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validate()) return
-
+  const handleSubmit = async (values: { phone: string; code: string }) => {
     setLoading(true)
-    setError(null)
     try {
       await login(values.phone, values.code)
       const from = (location.state as { from?: string })?.from || '/'
       navigate(from, { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : '登录失败，请重试')
+      message.error(err instanceof Error ? err.message : '登录失败，请重试')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <div className={styles.brand}>
-          <div className={styles.brandName}>草木沈塘</div>
-          <div className={styles.brandSub}>传统中药知识科普与调理参考</div>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          {error && <div className={styles.error}>{error}</div>}
-
-          <div className={styles.field}>
-            <label className={styles.label}>手机号</label>
-            <input
-              className={`${styles.input} ${touched.phone && errors.phone ? styles.inputError : ''}`}
-              type="tel"
-              placeholder="请输入 11 位手机号"
-              maxLength={11}
-              value={values.phone}
-              onChange={(e) => handleChange('phone', e.target.value)}
-              onBlur={() => handleBlur('phone')}
-            />
-            {touched.phone && errors.phone && (
-              <div className={styles.fieldError}>{errors.phone}</div>
-            )}
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label}>验证码</label>
-            <input
-              className={`${styles.input} ${touched.code && errors.code ? styles.inputError : ''}`}
-              type="text"
-              placeholder="请输入验证码"
-              value={values.code}
-              onChange={(e) => handleChange('code', e.target.value)}
-              onBlur={() => handleBlur('code')}
-            />
-            {touched.code && errors.code && (
-              <div className={styles.fieldError}>{errors.code}</div>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            className={styles.submitBtn}
-            disabled={loading}
-          >
-            {loading ? '登录中...' : '登录'}
-          </button>
-        </form>
-
-        <div className={styles.footer}>
-          还没有账号？<Link to="/register">立即注册</Link>
-        </div>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #1e4d38 0%, #2c6b4f 40%, #3d8b6a 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Decorative */}
+      <div style={{ position: 'absolute', top: '10%', left: '5%', opacity: 0.06, fontSize: 300 }}>
+        <HerbLeafIcon />
       </div>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, color: '#fff' }}>
+        <WaveDecoration style={{ width: '100%', height: 120 }} />
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 1 }}
+      >
+        <Card
+          style={{
+            borderRadius: 20,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            border: 'none',
+          }}
+          styles={{ body: { padding: '40px 32px' } }}
+        >
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <LogoIcon style={{ fontSize: 56, color: '#2c6b4f', marginBottom: 12 }} />
+            <Title level={3} style={{ margin: 0, color: '#2c6b4f' }}>草木沈塘</Title>
+            <Text type="secondary">传承本草智慧，守护自然健康</Text>
+          </div>
+
+          <Form layout="vertical" onFinish={handleSubmit} size="large">
+            <Form.Item
+              name="phone"
+              rules={[
+                { required: true, message: '请输入手机号' },
+                { pattern: /^\d{11}$/, message: '手机号须为 11 位数字' },
+              ]}
+            >
+              <Input
+                prefix={<MobileOutlined style={{ color: '#2c6b4f' }} />}
+                placeholder="请输入 11 位手机号"
+                maxLength={11}
+                style={{ borderRadius: 10, height: 48 }}
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="code"
+              rules={[{ required: true, message: '请输入验证码' }]}
+            >
+              <Input
+                prefix={<SafetyOutlined style={{ color: '#2c6b4f' }} />}
+                placeholder="请输入验证码"
+                style={{ borderRadius: 10, height: 48 }}
+                suffix={
+                  <Button type="link" size="small" style={{ padding: 0, fontSize: 13 }}>
+                    获取验证码
+                  </Button>
+                }
+              />
+            </Form.Item>
+
+            <Form.Item style={{ marginBottom: 16 }}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                block
+                loading={loading}
+                icon={<LoginOutlined />}
+                style={{
+                  height: 48,
+                  borderRadius: 10,
+                  fontSize: 16,
+                  fontWeight: 600,
+                  background: 'linear-gradient(135deg, #2c6b4f 0%, #3d8b6a 100%)',
+                }}
+              >
+                登录
+              </Button>
+            </Form.Item>
+          </Form>
+
+          <Divider style={{ margin: '16px 0' }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>或</Text>
+          </Divider>
+
+          <div style={{ textAlign: 'center' }}>
+            <Text type="secondary">还没有账号？</Text>
+            <Link to="/register" style={{ fontWeight: 600, marginLeft: 4 }}>立即注册</Link>
+          </div>
+        </Card>
+      </motion.div>
     </div>
   )
 }

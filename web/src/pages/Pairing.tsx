@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Card, Typography, Tag, Button, Spin, Alert, Space, Row, Col, Badge, Divider, Empty } from 'antd'
+import { ExperimentOutlined, CheckCircleOutlined, ReloadOutlined, WarningOutlined } from '@ant-design/icons'
+import { motion } from 'framer-motion'
 import { getHerbList } from '../api/herbs'
 import { submitPairing } from '../api/ai'
-import Loading from '../components/Loading'
-import ErrorMessage from '../components/ErrorMessage'
-import Disclaimer from '../components/Disclaimer'
+import { mockHerbs } from '../mock/data'
+import { HerbLeafIcon } from '../assets/icons'
 import type { HerbListItem, PairingResult } from '../types'
-import styles from './Pairing.module.css'
+
+const { Title, Text, Paragraph } = Typography
 
 export default function Pairing() {
   const [herbs, setHerbs] = useState<HerbListItem[]>([])
@@ -17,124 +20,138 @@ export default function Pairing() {
   const [result, setResult] = useState<PairingResult | null>(null)
 
   useEffect(() => {
-    const fetchHerbs = async () => {
-      try {
-        const data = await getHerbList({ page: 1, page_size: 100 })
-        setHerbs(data.items)
-      } catch {
-        setHerbs([])
-      } finally {
-        setHerbsLoading(false)
-      }
-    }
-    fetchHerbs()
+    getHerbList({ page: 1, page_size: 100 })
+      .then(data => setHerbs(data.items))
+      .catch(() => setHerbs(mockHerbs))
+      .finally(() => setHerbsLoading(false))
   }, [])
 
   const toggleHerb = (id: string) => {
-    setSelectedIds((prev) => {
+    setSelectedIds(prev => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      if (next.has(id)) next.delete(id); else next.add(id)
       return next
     })
   }
 
   const handleSubmit = async () => {
     if (selectedIds.size === 0) return
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     try {
-      const data = await submitPairing(Array.from(selectedIds))
-      setResult(data)
+      setResult(await submitPairing(Array.from(selectedIds)))
     } catch (err) {
-      setError(err instanceof Error ? err.message : '获取搭配建议失败，请重试')
+      setError(err instanceof Error ? err.message : '获取搭配建议失败')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleReset = () => {
-    setResult(null)
-    setSelectedIds(new Set())
-    setError(null)
-  }
+  const handleReset = () => { setResult(null); setSelectedIds(new Set()); setError(null) }
 
-  if (herbsLoading) return <Loading />
+  if (herbsLoading) return <div style={{ textAlign: 'center', padding: 120 }}><Spin size="large" /></div>
 
-  // Result mode
   if (result) {
     return (
-      <div className={styles.page}>
-        <h1 className={styles.title}>搭配建议结果</h1>
-        <Disclaimer type="full" />
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 24px 48px' }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)',
+            borderRadius: 16, padding: '32px 24px', marginBottom: 24, textAlign: 'center',
+          }}>
+            <CheckCircleOutlined style={{ fontSize: 48, color: '#2c6b4f', marginBottom: 12 }} />
+            <Title level={3} style={{ margin: 0, color: '#2c6b4f' }}>搭配建议结果</Title>
+          </div>
 
-        <div className={styles.suggestion}>
-          <h2 className={styles.sectionTitle}>搭配思路</h2>
-          <p className={styles.suggestionText}>{result.suggestion}</p>
-        </div>
+          <Alert type="warning" showIcon icon={<WarningOutlined />} message="免责声明"
+            description="以下内容仅为中药搭配方向参考，不构成医疗建议。" style={{ marginBottom: 24, borderRadius: 12 }} />
 
-        <div className={styles.herbResults}>
-          <h2 className={styles.sectionTitle}>中药详情</h2>
-          {result.herbs.map((herb) => (
-            <div key={herb.id} className={styles.herbCard}>
-              <div className={styles.herbHeader}>
-                <span className={styles.herbIcon}>🌿</span>
-                <Link to={`/herbs/${herb.id}`} className={styles.herbLink}>
-                  {herb.name}
-                </Link>
-              </div>
-              <div className={styles.herbInfo}>
-                <p><span className={styles.infoLabel}>不适合人群：</span>{herb.unsuitable_groups}</p>
-                <p><span className={styles.infoLabel}>注意事项：</span>{herb.precautions}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+          <Card style={{ borderRadius: 16, border: 'none', marginBottom: 16 }}>
+            <Title level={5}><ExperimentOutlined /> 搭配思路</Title>
+            <Paragraph style={{ lineHeight: 2, background: '#f9fafb', padding: 16, borderRadius: 8 }}>
+              {result.suggestion}
+            </Paragraph>
+          </Card>
 
-        <button className={styles.resetBtn} onClick={handleReset}>
-          重新选择
-        </button>
+          <Title level={5} style={{ marginBottom: 12 }}>中药详情</Title>
+          <Row gutter={[12, 12]}>
+            {result.herbs.map(herb => (
+              <Col xs={24} md={12} key={herb.id}>
+                <Card size="small" style={{ borderRadius: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <HerbLeafIcon style={{ fontSize: 20, color: '#2c6b4f' }} />
+                    <Link to={`/herbs/${herb.id}`}><Text strong style={{ color: '#2c6b4f' }}>{herb.name}</Text></Link>
+                  </div>
+                  <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>不适合人群：{herb.unsuitable_groups}</Text>
+                  <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>注意事项：{herb.precautions}</Text>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+
+          <div style={{ textAlign: 'center', marginTop: 24 }}>
+            <Button icon={<ReloadOutlined />} onClick={handleReset} size="large" style={{ borderRadius: 10 }}>重新选择</Button>
+          </div>
+        </motion.div>
       </div>
     )
   }
 
-  // Selection mode
   return (
-    <div className={styles.page}>
-      <h1 className={styles.title}>中药搭配建议</h1>
-      <p className={styles.subtitle}>选择一味或多味中药，获取 AI 搭配思路建议</p>
+    <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 24px 48px' }}>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <div style={{
+          background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
+          borderRadius: 16, padding: '32px 24px', marginBottom: 24, textAlign: 'center',
+        }}>
+          <ExperimentOutlined style={{ fontSize: 48, color: '#e65100', marginBottom: 12 }} />
+          <Title level={2} style={{ margin: 0, color: '#e65100' }}>中药搭配建议</Title>
+          <Text type="secondary" style={{ fontSize: 15 }}>选择一味或多味中药，获取 AI 搭配思路建议</Text>
+        </div>
 
-      {error && (
-        <ErrorMessage message={error} onRetry={handleSubmit} />
-      )}
+        {error && <Alert type="error" message={error} showIcon closable style={{ marginBottom: 16, borderRadius: 8 }} />}
 
-      <div className={styles.chips}>
-        {herbs.map((herb) => (
-          <button
-            key={herb.id}
-            className={selectedIds.has(herb.id) ? styles.chipActive : styles.chip}
-            onClick={() => toggleHerb(herb.id)}
-          >
-            {herb.name}
-          </button>
-        ))}
-      </div>
+        <Card style={{ borderRadius: 16, border: 'none', marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <Text strong>选择中药</Text>
+            <Badge count={selectedIds.size} style={{ backgroundColor: '#2c6b4f' }}>
+              <Tag color="green">已选择</Tag>
+            </Badge>
+          </div>
 
-      {herbs.length === 0 && (
-        <p className={styles.emptyHint}>暂无可选中药</p>
-      )}
+          {herbs.length === 0 ? (
+            <Empty description="暂无可选中药" />
+          ) : (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {herbs.map(herb => (
+                <Tag
+                  key={herb.id}
+                  color={selectedIds.has(herb.id) ? 'green' : undefined}
+                  style={{
+                    cursor: 'pointer', padding: '6px 16px', borderRadius: 20, fontSize: 13,
+                    border: selectedIds.has(herb.id) ? undefined : '1px solid #d9d9d9',
+                    transition: 'all 0.2s',
+                  }}
+                  onClick={() => toggleHerb(herb.id)}
+                >
+                  {selectedIds.has(herb.id) && <CheckCircleOutlined style={{ marginRight: 4 }} />}
+                  {herb.name}
+                </Tag>
+              ))}
+            </div>
+          )}
+        </Card>
 
-      <div className={styles.selectedCount}>
-        已选择 {selectedIds.size} 味中药
-      </div>
-
-      <button
-        className={styles.submitBtn}
-        disabled={loading || selectedIds.size === 0}
-        onClick={handleSubmit}
-      >
-        {loading ? '分析中...' : '获取搭配建议'}
-      </button>
+        <Button
+          type="primary" size="large" block
+          icon={<ExperimentOutlined />}
+          disabled={loading || selectedIds.size === 0}
+          loading={loading}
+          onClick={handleSubmit}
+          style={{ height: 48, borderRadius: 12, fontWeight: 600 }}
+        >
+          {loading ? '分析中...' : '获取搭配建议'}
+        </Button>
+      </motion.div>
     </div>
   )
 }

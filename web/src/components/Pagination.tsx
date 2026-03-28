@@ -1,4 +1,4 @@
-import styles from './Pagination.module.css'
+import { Pagination as AntPagination } from 'antd'
 
 interface PaginationProps {
   current: number
@@ -8,27 +8,15 @@ interface PaginationProps {
 }
 
 export default function Pagination({ current, total, pageSize, onChange }: PaginationProps) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
-
   return (
-    <div className={styles.container}>
-      <button
-        className={styles.button}
-        disabled={current <= 1}
-        onClick={() => onChange(current - 1)}
-      >
-        上一页
-      </button>
-      <span className={styles.indicator}>
-        {current} / {totalPages}
-      </span>
-      <button
-        className={styles.button}
-        disabled={current >= totalPages}
-        onClick={() => onChange(current + 1)}
-      >
-        下一页
-      </button>
+    <div style={{ textAlign: 'center', marginTop: 24 }}>
+      <AntPagination
+        current={current}
+        total={total}
+        pageSize={pageSize}
+        onChange={onChange}
+        showSizeChanger={false}
+      />
     </div>
   )
 }

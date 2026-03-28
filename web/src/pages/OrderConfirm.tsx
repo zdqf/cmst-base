@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Card, Typography, Button, Alert, Divider, Space, Tag } from 'antd'
+import { CheckCircleOutlined, ShoppingCartOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
+import { motion } from 'framer-motion'
 import { useCart } from '../contexts/CartContext'
 import { createOrder } from '../api/orders'
-import styles from './OrderConfirm.module.css'
+
+const { Title, Text } = Typography
 
 export default function OrderConfirm() {
   const { items, totalPrice, clearCart } = useCart()
@@ -11,68 +15,69 @@ export default function OrderConfirm() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (items.length === 0) {
-      navigate('/cart', { replace: true })
-    }
+    if (items.length === 0) navigate('/cart', { replace: true })
   }, [items, navigate])
 
   if (items.length === 0) return null
 
   const handleSubmit = async () => {
-    setSubmitting(true)
-    setError(null)
+    setSubmitting(true); setError(null)
     try {
-      await createOrder({
-        items: items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
-      })
+      await createOrder({ items: items.map(i => ({ product_id: i.product_id, quantity: i.quantity })) })
       clearCart()
       navigate('/orders')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '提交订单失败，请重试'
-      if (/库存/.test(msg) || /stock/i.test(msg) || /insufficient/i.test(msg)) {
-        setError(msg)
-      } else {
-        setError(msg)
-      }
+      setError(err instanceof Error ? err.message : '提交订单失败')
     } finally {
       setSubmitting(false)
     }
   }
 
   return (
-    <div className={styles.page}>
-      <h1 className={styles.title}>订单确认</h1>
+    <div style={{ maxWidth: 700, margin: '0 auto', padding: '24px 24px 48px' }}>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <Title level={3}><ShoppingCartOutlined /> 订单确认</Title>
 
-      <div className={styles.list}>
-        {items.map((item) => (
-          <div key={item.id} className={styles.item}>
-            <div className={styles.itemInfo}>
-              <span className={styles.itemName}>{item.product_name}</span>
-              <span className={styles.itemMeta}>
-                ¥{item.product_price.toFixed(2)} × {item.quantity}
-              </span>
+        <Card style={{ borderRadius: 16, border: 'none', marginBottom: 16 }}>
+          {items.map((item, i) => (
+            <div key={item.id}>
+              {i > 0 && <Divider style={{ margin: '12px 0' }} />}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <Text strong>{item.product_name}</Text>
+                  <Text type="secondary" style={{ display: 'block', fontSize: 12 }}>
+                    ¥{item.product_price.toFixed(2)} × {item.quantity}
+                  </Text>
+                </div>
+                <Text style={{ color: '#e53e3e', fontWeight: 600 }}>
+                  ¥{(item.product_price * item.quantity).toFixed(2)}
+                </Text>
+              </div>
             </div>
-            <span className={styles.itemSubtotal}>
-              ¥{(item.product_price * item.quantity).toFixed(2)}
-            </span>
+          ))}
+
+          <Divider />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text strong>应付总额</Text>
+            <Text style={{ color: '#e53e3e', fontSize: 24, fontWeight: 700 }}>¥{totalPrice.toFixed(2)}</Text>
           </div>
-        ))}
-      </div>
+        </Card>
 
-      <div className={styles.totalRow}>
-        <span>应付总额</span>
-        <span className={styles.totalPrice}>¥{totalPrice.toFixed(2)}</span>
-      </div>
+        {error && <Alert type="error" message={error} showIcon style={{ marginBottom: 16, borderRadius: 8 }} />}
 
-      {error && <p className={styles.error}>{error}</p>}
-
-      <button
-        className={styles.submitBtn}
-        disabled={submitting}
-        onClick={handleSubmit}
-      >
-        {submitting ? '提交中...' : '提交订单'}
-      </button>
+        <Space direction="vertical" style={{ width: '100%' }} size={12}>
+          <Button type="primary" size="large" block loading={submitting} icon={<CheckCircleOutlined />}
+            onClick={handleSubmit} style={{ height: 48, borderRadius: 12, fontWeight: 600 }}>
+            {submitting ? '提交中...' : '提交订单'}
+          </Button>
+          <div style={{ textAlign: 'center' }}>
+            <Space>
+              <Tag icon={<SafetyCertificateOutlined />} color="green">安全支付</Tag>
+              <Tag color="blue">品质保障</Tag>
+            </Space>
+          </div>
+        </Space>
+      </motion.div>
     </div>
   )
 }

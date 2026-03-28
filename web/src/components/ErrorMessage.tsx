@@ -1,4 +1,4 @@
-import styles from './ErrorMessage.module.css'
+import { Alert, Button } from 'antd'
 
 interface ErrorMessageProps {
   message: string
@@ -7,13 +7,12 @@ interface ErrorMessageProps {
 
 export default function ErrorMessage({ message, onRetry }: ErrorMessageProps) {
   return (
-    <div className={styles.container}>
-      <p className={styles.message}>{message}</p>
-      {onRetry && (
-        <button className={styles.retryButton} onClick={onRetry}>
-          重试
-        </button>
-      )}
-    </div>
+    <Alert
+      type="error"
+      message={message}
+      showIcon
+      style={{ borderRadius: 8 }}
+      action={onRetry ? <Button size="small" onClick={onRetry}>重试</Button> : undefined}
+    />
   )
 }

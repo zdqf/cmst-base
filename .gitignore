@@ -29,7 +29,26 @@ npm-debug.log*
 # Kiro
 .kiro/
 
-# Other projects (not yet)
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+.env
+*.egg-info/
+*.egg
+.pytest_cache/
+.hypothesis/
+htmlcov/
+.coverage
+.coverage.*
+
+# Alembic
+migrations/versions/__pycache__/
+
+# Not yet tracked
 admin/
 miniapp/
-server/

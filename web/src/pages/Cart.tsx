@@ -5,6 +5,7 @@ import { ShoppingCartOutlined, DeleteOutlined, ShopOutlined, ArrowRightOutlined 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCart } from '../contexts/CartContext'
 import { mockCartItems } from '../mock/data'
+import { formatPrice } from '../utils/format'
 
 const { Title, Text } = Typography
 
@@ -16,7 +17,7 @@ export default function Cart() {
   // Use mock data if cart is empty after fetch
   const items = cartItems.length > 0 ? cartItems : (loading ? [] : mockCartItems)
   const count = cartItems.length > 0 ? totalCount : items.reduce((s, i) => s + i.quantity, 0)
-  const price = cartItems.length > 0 ? totalPrice : items.reduce((s, i) => s + i.product_price * i.quantity, 0)
+  const price = cartItems.length > 0 ? totalPrice : items.reduce((s, i) => s + Number(i.product_price) * i.quantity, 0)
 
   useEffect(() => {
     fetchCart().catch(() => {}).finally(() => setLoading(false))
@@ -70,7 +71,7 @@ export default function Cart() {
                       </Col>
                       <Col flex="auto">
                         <Text strong style={{ display: 'block', marginBottom: 4 }}>{item.product_name}</Text>
-                        <Text style={{ color: '#e53e3e', fontWeight: 600 }}>¥{item.product_price.toFixed(2)}</Text>
+                        <Text style={{ color: '#e53e3e', fontWeight: 600 }}>¥{formatPrice(item.product_price)}</Text>
                       </Col>
                       <Col>
                         <Space direction="vertical" align="end" size={8}>
@@ -81,7 +82,7 @@ export default function Cart() {
                           />
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <Text type="secondary" style={{ fontSize: 12 }}>
-                              小计：<Text style={{ color: '#e53e3e' }}>¥{(item.product_price * item.quantity).toFixed(2)}</Text>
+                              小计：<Text style={{ color: '#e53e3e' }}>¥{formatPrice(Number(item.product_price) * item.quantity)}</Text>
                             </Text>
                             <Popconfirm title="确定删除？" onConfirm={() => removeItem(item.id)} okText="确定" cancelText="取消">
                               <Button type="text" danger icon={<DeleteOutlined />} size="small" />
@@ -105,7 +106,7 @@ export default function Cart() {
               <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <Text type="secondary">共 {count} 件，合计</Text>
-                  <Text style={{ color: '#e53e3e', fontSize: 24, fontWeight: 700, marginLeft: 8 }}>¥{price.toFixed(2)}</Text>
+                  <Text style={{ color: '#e53e3e', fontSize: 24, fontWeight: 700, marginLeft: 8 }}>¥{formatPrice(price)}</Text>
                 </div>
                 <Button type="primary" size="large" icon={<ArrowRightOutlined />}
                   onClick={() => navigate('/order/confirm')}

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { getProductDetail } from '../api/products'
 import { useCart } from '../contexts/CartContext'
 import { mockProducts } from '../mock/data'
+import { formatPrice } from '../utils/format'
 import type { Product } from '../types'
 
 const { Title, Text, Paragraph } = Typography
@@ -85,7 +86,7 @@ export default function ProductDetail() {
                   }}>
                     <Text type="secondary" style={{ fontSize: 12 }}>价格</Text>
                     <div>
-                      <Text style={{ color: '#e53e3e', fontSize: 32, fontWeight: 700 }}>¥{product.price.toFixed(2)}</Text>
+                      <Text style={{ color: '#e53e3e', fontSize: 32, fontWeight: 700 }}>¥{formatPrice(product.price)}</Text>
                       {product.specification && (
                         <Text type="secondary" style={{ marginLeft: 8 }}>/ {product.specification}</Text>
                       )}

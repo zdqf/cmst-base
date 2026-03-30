@@ -19,6 +19,7 @@ import {
 import { motion } from 'framer-motion'
 import { getDailyHerb } from '../api/herbs'
 import { mockHerbs, mockProducts, mockStats, healthTips, hotSearches } from '../mock/data'
+import { formatPrice, formatPriceInt } from '../utils/format'
 import { WaveDecoration, HerbLeafIcon, HerbBagIcon, TeaCupIcon, GiftBoxIcon, BottleIcon } from '../assets/icons'
 import type { HerbDetail } from '../types'
 
@@ -339,7 +340,7 @@ export default function Home() {
                     <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 6 }}>{product.specification}</Text>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
                       <Text style={{ color: '#c62828', fontSize: 11 }}>¥</Text>
-                      <Text style={{ color: '#c62828', fontSize: 20, fontWeight: 700, lineHeight: 1 }}>{product.price.toFixed(0)}</Text>
+                      <Text style={{ color: '#c62828', fontSize: 20, fontWeight: 700, lineHeight: 1 }}>{formatPriceInt(product.price)}</Text>
                     </div>
                   </Card>
                 </motion.div>

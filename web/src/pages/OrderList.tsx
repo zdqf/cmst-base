@@ -4,6 +4,7 @@ import { ShoppingOutlined, ClockCircleOutlined, CheckCircleOutlined, CarOutlined
 import { motion } from 'framer-motion'
 import { getOrderList } from '../api/orders'
 import { mockOrders } from '../mock/data'
+import { formatPrice } from '../utils/format'
 import type { Order } from '../types'
 
 const { Title, Text } = Typography
@@ -84,14 +85,14 @@ export default function OrderList() {
                           }}>🏷️</div>
                           <Text>{item.product_name}</Text>
                         </div>
-                        <Text type="secondary">×{item.quantity}　¥{item.unit_price.toFixed(2)}</Text>
+                        <Text type="secondary">×{item.quantity}　¥{formatPrice(item.unit_price)}</Text>
                       </div>
                     ))}
 
                     <Divider style={{ margin: '12px 0' }} />
                     <div style={{ textAlign: 'right' }}>
                       <Text type="secondary">合计：</Text>
-                      <Text style={{ color: '#e53e3e', fontSize: 18, fontWeight: 700 }}>¥{order.total_amount.toFixed(2)}</Text>
+                      <Text style={{ color: '#e53e3e', fontSize: 18, fontWeight: 700 }}>¥{formatPrice(order.total_amount)}</Text>
                     </div>
                   </Card>
                 </motion.div>

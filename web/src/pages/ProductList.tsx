@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { getProductList } from '../api/products'
 import { mockProducts } from '../mock/data'
 import { HerbBagIcon, TeaCupIcon, GiftBoxIcon, BottleIcon } from '../assets/icons'
+import { formatPrice, formatPriceInt, formatPriceDec } from '../utils/format'
 import type { Product } from '../types'
 
 const { Title, Text } = Typography
@@ -149,8 +150,8 @@ export default function ProductList() {
                       </Text>
                       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                         <div>
-                          <Text style={{ color: '#e53e3e', fontSize: 20, fontWeight: 700 }}>¥{product.price.toFixed(0)}</Text>
-                          <Text type="secondary" style={{ fontSize: 11, marginLeft: 4 }}>.{(product.price % 1 * 100).toFixed(0).padStart(2, '0')}</Text>
+                          <Text style={{ color: '#e53e3e', fontSize: 20, fontWeight: 700 }}>¥{formatPriceInt(product.price)}</Text>
+                          <Text type="secondary" style={{ fontSize: 11, marginLeft: 4 }}>.{formatPriceDec(product.price)}</Text>
                         </div>
                         <Tag color="green" style={{ fontSize: 11, margin: 0 }}>{product.category}</Tag>
                       </div>

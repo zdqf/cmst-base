@@ -26,6 +26,7 @@ from app.routers.consultations import router as consultations_router
 from app.routers.herbs import router as herbs_router
 from app.routers.orders import router as orders_router
 from app.routers.products import router as products_router
+from app.routers.payments import router as payments_router
 from app.schemas.common import ApiResponse
 
 
@@ -86,6 +87,7 @@ def create_app() -> FastAPI:
     app.include_router(products_router)
     app.include_router(cart_router)
     app.include_router(orders_router)
+    app.include_router(payments_router)
 
     # Register admin routers
     app.include_router(admin_users_router)

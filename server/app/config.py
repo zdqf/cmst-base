@@ -46,9 +46,28 @@ class Settings(BaseSettings):
     aliyun_sms_template_code: str = ""
 
     # SMS Limits
-    sms_code_ttl: int = 300       # 验证码有效期（秒）
-    sms_rate_limit: int = 60      # 发送间隔（秒）
-    sms_daily_limit: int = 10     # 每日每号码上限
+    sms_code_ttl: int = 300       # verification code TTL (seconds)
+    sms_rate_limit: int = 60      # send interval (seconds)
+    sms_daily_limit: int = 10     # daily limit per phone number
+
+    # Payment Provider
+    payment_provider: str = "mock"  # "alipay" / "wechat" / "mock"
+
+    # Alipay
+    alipay_app_id: str = ""
+    alipay_private_key: str = ""       # app private key (RSA2)
+    alipay_public_key: str = ""        # alipay public key
+    alipay_notify_url: str = ""        # async callback URL
+    alipay_return_url: str = ""        # frontend redirect URL
+    alipay_sandbox: bool = True        # sandbox mode
+
+    # WeChat Pay
+    wechat_app_id: str = ""
+    wechat_mch_id: str = ""            # merchant ID
+    wechat_api_key: str = ""           # API v3 key
+    wechat_cert_serial_no: str = ""    # certificate serial number
+    wechat_private_key: str = ""       # merchant private key
+    wechat_notify_url: str = ""        # async callback URL
 
 
 settings = Settings()

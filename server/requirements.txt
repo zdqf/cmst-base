@@ -25,6 +25,10 @@ redis[hiredis]==5.0.0
 alibabacloud-dysmsapi20170525==3.0.0
 alibabacloud-tea-openapi==0.3.9
 
+# Payment
+python-alipay-sdk==4.1.0
+wechatpayv3==1.2.43
+
 # Testing
 pytest==8.3.3
 pytest-asyncio==0.24.0

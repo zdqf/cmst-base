@@ -87,7 +87,7 @@ class TestP1CorrectPasswordMustSucceed:
         db = _make_mock_db(user)
 
         with patch(
-            "app.services.auth_service.verify_password", return_value=True
+            "app.services.auth_service.verify_password", new=AsyncMock(return_value=True)
         ):
             result_user, token = await admin_login(db, phone, password)
 
@@ -133,7 +133,7 @@ class TestP2WrongPasswordMustFail:
         db = _make_mock_db(user)
 
         with patch(
-            "app.services.auth_service.verify_password", return_value=False
+            "app.services.auth_service.verify_password", new=AsyncMock(return_value=False)
         ):
             with pytest.raises(AppException) as exc_info:
                 await admin_login(db, phone, wrong_password)

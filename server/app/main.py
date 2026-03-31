@@ -13,6 +13,7 @@ from app.middleware.rate_limit import RateLimitMiddleware
 from app.redis import close_redis, init_redis
 from app.routers.admin.compliance import router as admin_compliance_router
 from app.routers.admin.consultations import router as admin_consultations_router
+from app.routers.admin.dashboard import router as admin_dashboard_router
 from app.routers.admin.diagnosis_logs import router as admin_diagnosis_logs_router
 from app.routers.admin.herbs import router as admin_herbs_router
 from app.routers.admin.orders import router as admin_orders_router
@@ -90,6 +91,7 @@ def create_app() -> FastAPI:
     app.include_router(payments_router)
 
     # Register admin routers
+    app.include_router(admin_dashboard_router)
     app.include_router(admin_users_router)
     app.include_router(admin_consultations_router)
     app.include_router(admin_diagnosis_logs_router)

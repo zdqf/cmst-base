@@ -21,9 +21,9 @@ from app.exceptions import AppException
 from app.schemas.auth import AdminLoginRequest
 from app.services.auth_service import (
     BCRYPT_ROUNDS,
+    _hash_password_sync,
+    _verify_password_sync,
     admin_login,
-    hash_password,
-    verify_password,
 )
 
 
@@ -36,20 +36,20 @@ class TestPasswordHashing:
     """Test bcrypt password hashing and verification."""
 
     def test_hash_password_returns_bcrypt_hash(self):
-        hashed = hash_password("test123")
+        hashed = _hash_password_sync("test123")
         assert hashed.startswith("$2b$") or hashed.startswith("$2a$")
 
     def test_verify_password_correct(self):
-        hashed = hash_password("mypassword")
-        assert verify_password("mypassword", hashed) is True
+        hashed = _hash_password_sync("mypassword")
+        assert _verify_password_sync("mypassword", hashed) is True
 
     def test_verify_password_wrong(self):
-        hashed = hash_password("mypassword")
-        assert verify_password("wrongpassword", hashed) is False
+        hashed = _hash_password_sync("mypassword")
+        assert _verify_password_sync("wrongpassword", hashed) is False
 
     def test_bcrypt_cost_factor_at_least_12(self):
         """Requirement 24.1: bcrypt cost factor >= 12."""
-        hashed = hash_password("test123")
+        hashed = _hash_password_sync("test123")
         # bcrypt hash format: $2b$<rounds>$...
         parts = hashed.split("$")
         rounds = int(parts[2])
@@ -57,8 +57,8 @@ class TestPasswordHashing:
 
     def test_hash_password_different_each_time(self):
         """bcrypt should produce different hashes for the same password (salt)."""
-        h1 = hash_password("samepassword")
-        h2 = hash_password("samepassword")
+        h1 = _hash_password_sync("samepassword")
+        h2 = _hash_password_sync("samepassword")
         assert h1 != h2
 
     def test_bcrypt_rounds_configured(self):
@@ -80,7 +80,7 @@ class TestAdminLogin:
         user.id = uuid.uuid4()
         user.phone = "13800138000"
         user.is_admin = True
-        user.password_hash = hash_password(password)
+        user.password_hash = _hash_password_sync(password)
         user.last_login_at = None
         return user
 

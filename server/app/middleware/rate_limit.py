@@ -14,7 +14,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
-from app.redis import get_redis, is_redis_available
+from app.redis import get_redis, is_redis_available, redis_available
 
 logger = logging.getLogger(__name__)
 
@@ -61,8 +61,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         (allow) when Redis is unavailable so the system degrades
         gracefully.
         """
-        if not await is_redis_available():
-            logger.warning("Redis unavailable — rate limiting disabled, allowing request")
+        if not redis_available():
             return False
 
         redis = get_redis()

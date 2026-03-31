@@ -109,13 +109,14 @@ async def list_orders(
     offset = (page - 1) * page_size
     query_stmt = (
         select(Order)
+        .options(joinedload(Order.items).joinedload(OrderItem.product))
         .where(*conditions)
         .order_by(Order.created_at.desc())
         .offset(offset)
         .limit(page_size)
     )
     result = await db.execute(query_stmt)
-    orders = result.scalars().all()
+    orders = result.unique().scalars().all()
 
     items = [OrderListItem.model_validate(o) for o in orders]
     return PaginatedResponse.create(

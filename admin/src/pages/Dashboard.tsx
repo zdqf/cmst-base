@@ -11,12 +11,9 @@ import {
   ClockCircleOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { getUsers } from '@/api/users';
+import { getDashboardStats } from '@/api/dashboard';
 import { getOrders } from '@/api/orders';
 import { getConsultations } from '@/api/consultations';
-import { getDiagnosisLogs } from '@/api/diagnosisLogs';
-import { getProducts } from '@/api/products';
-import { getHerbs } from '@/api/herbs';
 import type { AdminOrderItem, AdminConsultationItem } from '@/types';
 
 const { Title, Text } = Typography;
@@ -49,26 +46,22 @@ const Dashboard: React.FC = () => {
   const loadDashboard = async () => {
     setLoading(true);
     try {
-      const [usersRes, ordersRes, pendingOrdersRes, consultsRes, pendingConsultsRes, productsRes, herbsRes, diagRes] = await Promise.all([
-        getUsers({ page: 1, page_size: 1 }),
+      const [statsRes, ordersRes, consultsRes] = await Promise.all([
+        getDashboardStats(),
         getOrders({ page: 1, page_size: 5 }),
-        getOrders({ page: 1, page_size: 1, status: 'pending' }),
         getConsultations({ page: 1, page_size: 5 }),
-        getConsultations({ page: 1, page_size: 1, status: 'pending' }),
-        getProducts({ page: 1, page_size: 1 }),
-        getHerbs({ page: 1, page_size: 1 }),
-        getDiagnosisLogs({ page: 1, page_size: 1 }),
       ]);
 
+      const s = statsRes.data.data;
       setStats({
-        users: usersRes.data.data?.total || 0,
-        orders: ordersRes.data.data?.total || 0,
-        pendingOrders: pendingOrdersRes.data.data?.total || 0,
-        consultations: consultsRes.data.data?.total || 0,
-        pendingConsultations: pendingConsultsRes.data.data?.total || 0,
-        products: productsRes.data.data?.total || 0,
-        herbs: herbsRes.data.data?.total || 0,
-        diagnosisLogs: diagRes.data.data?.total || 0,
+        users: s?.users || 0,
+        orders: s?.orders || 0,
+        pendingOrders: s?.pending_orders || 0,
+        consultations: s?.consultations || 0,
+        pendingConsultations: s?.pending_consultations || 0,
+        products: s?.products || 0,
+        herbs: s?.herbs || 0,
+        diagnosisLogs: s?.diagnosis_logs || 0,
       });
       setRecentOrders(ordersRes.data.data?.items || []);
       setRecentConsultations(consultsRes.data.data?.items || []);

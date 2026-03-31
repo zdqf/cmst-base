@@ -13,6 +13,7 @@ Requirements:
 - 24.1: bcrypt cost factor >= 12
 """
 
+import asyncio
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -110,17 +111,25 @@ def _create_admin_token(user_id: str) -> str:
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against a bcrypt hash."""
+def _verify_password_sync(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(
         plain_password.encode("utf-8"), hashed_password.encode("utf-8")
     )
 
 
-def hash_password(password: str) -> str:
-    """Hash a password using bcrypt with cost factor >= 12."""
+async def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a plain password against a bcrypt hash (non-blocking)."""
+    return await asyncio.to_thread(_verify_password_sync, plain_password, hashed_password)
+
+
+def _hash_password_sync(password: str) -> str:
     salt = bcrypt.gensalt(rounds=BCRYPT_ROUNDS)
     return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+
+
+async def hash_password(password: str) -> str:
+    """Hash a password using bcrypt with cost factor >= 12 (non-blocking)."""
+    return await asyncio.to_thread(_hash_password_sync, password)
 
 
 async def set_admin_password(
@@ -161,11 +170,11 @@ async def set_admin_password(
     if user.password_hash:
         if not old_password:
             raise AppException(code=400, message="修改密码需要提供旧密码")
-        if not verify_password(old_password, user.password_hash):
+        if not await verify_password(old_password, user.password_hash):
             raise AppException(code=400, message="旧密码错误")
 
     # Hash and store (Requirement 1.4 — bcrypt cost >= 12)
-    user.password_hash = hash_password(password)
+    user.password_hash = await hash_password(password)
     await db.flush()
 
 
@@ -205,7 +214,7 @@ async def admin_login(db: AsyncSession, phone: str, password: str) -> tuple[User
         raise AppException(code=400, message=error_msg)
 
     # Verify password
-    if not verify_password(password, user.password_hash):
+    if not await verify_password(password, user.password_hash):
         raise AppException(code=400, message=error_msg)
 
     # Update last login timestamp

@@ -13,9 +13,9 @@ import pytest
 
 from app.exceptions import AppException, ForbiddenError
 from app.services.auth_service import (
-    hash_password,
+    _hash_password_sync,
+    _verify_password_sync,
     set_admin_password,
-    verify_password,
 )
 
 
@@ -30,7 +30,7 @@ def _make_admin_user(password: str | None = None) -> MagicMock:
     user.id = uuid.uuid4()
     user.phone = "13800138000"
     user.is_admin = True
-    user.password_hash = hash_password(password) if password else None
+    user.password_hash = _hash_password_sync(password) if password else None
     user.updated_at = None
     return user
 
@@ -55,7 +55,7 @@ class TestFirstTimePasswordSetup:
         await set_admin_password(db, user, "newpass123")
 
         assert user.password_hash is not None
-        assert verify_password("newpass123", user.password_hash)
+        assert _verify_password_sync("newpass123", user.password_hash)
         db.flush.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -66,7 +66,7 @@ class TestFirstTimePasswordSetup:
 
         await set_admin_password(db, user, "newpass123", old_password="anything")
 
-        assert verify_password("newpass123", user.password_hash)
+        assert _verify_password_sync("newpass123", user.password_hash)
 
     @pytest.mark.asyncio
     async def test_password_stored_as_bcrypt(self):
@@ -97,8 +97,8 @@ class TestPasswordChange:
 
         await set_admin_password(db, user, "newpass456", old_password=old_pw)
 
-        assert verify_password("newpass456", user.password_hash)
-        assert not verify_password(old_pw, user.password_hash)
+        assert _verify_password_sync("newpass456", user.password_hash)
+        assert not _verify_password_sync(old_pw, user.password_hash)
 
     @pytest.mark.asyncio
     async def test_change_password_missing_old_password(self):
@@ -164,7 +164,7 @@ class TestPasswordLengthValidation:
 
         await set_admin_password(db, user, "123456")
 
-        assert verify_password("123456", user.password_hash)
+        assert _verify_password_sync("123456", user.password_hash)
 
     @pytest.mark.asyncio
     async def test_password_max_boundary(self):
@@ -175,7 +175,7 @@ class TestPasswordLengthValidation:
 
         await set_admin_password(db, user, pw)
 
-        assert verify_password(pw, user.password_hash)
+        assert _verify_password_sync(pw, user.password_hash)
 
 
 # ---------------------------------------------------------------------------

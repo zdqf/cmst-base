@@ -13,12 +13,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.exceptions import AppException
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
 from app.services.auth_service import (
-    VALID_SMS_CODE,
     login_user,
     register_user,
-    verify_sms_code,
 )
 
 
@@ -67,15 +66,7 @@ class TestTokenResponseSchema:
 # ---------------------------------------------------------------------------
 
 
-class TestVerifySmsCode:
-    def test_valid_code(self):
-        assert verify_sms_code("13800138000", VALID_SMS_CODE) is True
-
-    def test_invalid_code(self):
-        assert verify_sms_code("13800138000", "000000") is False
-
-    def test_empty_code(self):
-        assert verify_sms_code("13800138000", "") is False
+# verify_sms_code tests are in test_sms_code.py (sms_service module)
 
 
 class TestRegisterUser:
@@ -87,7 +78,8 @@ class TestRegisterUser:
         mock_db = AsyncMock()
         mock_db.execute.return_value = mock_result
 
-        user, token = await register_user(mock_db, "13800138000", VALID_SMS_CODE)
+        with patch("app.services.auth_service.sms_verify_code", new_callable=AsyncMock, return_value=True):
+            user, token = await register_user(mock_db, "13800138000", "123456")
         assert user.phone == "13800138000"
         assert isinstance(token, str)
         assert len(token) > 0
@@ -97,8 +89,9 @@ class TestRegisterUser:
     @pytest.mark.asyncio
     async def test_register_invalid_code(self):
         mock_db = AsyncMock()
-        with pytest.raises(ValueError, match="验证码无效"):
-            await register_user(mock_db, "13800138000", "wrong")
+        with patch("app.services.auth_service.sms_verify_code", new_callable=AsyncMock, return_value=False):
+            with pytest.raises(AppException, match="验证码无效"):
+                await register_user(mock_db, "13800138000", "wrong")
 
     @pytest.mark.asyncio
     async def test_register_duplicate_phone(self):
@@ -109,8 +102,9 @@ class TestRegisterUser:
         mock_db = AsyncMock()
         mock_db.execute.return_value = mock_result
 
-        with pytest.raises(ValueError, match="该手机号已注册"):
-            await register_user(mock_db, "13800138000", VALID_SMS_CODE)
+        with patch("app.services.auth_service.sms_verify_code", new_callable=AsyncMock, return_value=True):
+            with pytest.raises(AppException, match="该手机号已注册"):
+                await register_user(mock_db, "13800138000", "123456")
 
 
 class TestLoginUser:
@@ -127,7 +121,8 @@ class TestLoginUser:
         mock_db = AsyncMock()
         mock_db.execute.return_value = mock_result
 
-        user, token = await login_user(mock_db, "13800138000", VALID_SMS_CODE)
+        with patch("app.services.auth_service.sms_verify_code", new_callable=AsyncMock, return_value=True):
+            user, token = await login_user(mock_db, "13800138000", "123456")
         assert user.id == mock_user.id
         assert isinstance(token, str)
         assert len(token) > 0
@@ -138,8 +133,9 @@ class TestLoginUser:
     @pytest.mark.asyncio
     async def test_login_invalid_code(self):
         mock_db = AsyncMock()
-        with pytest.raises(ValueError, match="验证码无效"):
-            await login_user(mock_db, "13800138000", "wrong")
+        with patch("app.services.auth_service.sms_verify_code", new_callable=AsyncMock, return_value=False):
+            with pytest.raises(AppException, match="验证码无效"):
+                await login_user(mock_db, "13800138000", "wrong")
 
     @pytest.mark.asyncio
     async def test_login_phone_not_registered(self):
@@ -149,8 +145,9 @@ class TestLoginUser:
         mock_db = AsyncMock()
         mock_db.execute.return_value = mock_result
 
-        with pytest.raises(ValueError, match="该手机号未注册"):
-            await login_user(mock_db, "13800138000", VALID_SMS_CODE)
+        with patch("app.services.auth_service.sms_verify_code", new_callable=AsyncMock, return_value=True):
+            with pytest.raises(AppException, match="该手机号未注册"):
+                await login_user(mock_db, "13800138000", "123456")
 
 
 # ---------------------------------------------------------------------------
@@ -187,14 +184,14 @@ class TestRegisterEndpoint:
         from app.main import app
 
         with patch("app.routers.auth.register_user", new_callable=AsyncMock) as mock_reg:
-            mock_reg.side_effect = ValueError("验证码无效")
+            mock_reg.side_effect = AppException(code=400, message="验证码无效")
             with patch("app.routers.auth.get_db"):
                 client = TestClient(app)
                 response = client.post(
                     "/api/v1/auth/register",
                     json={"phone": "13800138000", "code": "000000"},
                 )
-        assert response.status_code == 200
+        assert response.status_code == 400
         body = response.json()
         assert body["code"] == 400
         assert body["message"] == "验证码无效"
@@ -204,14 +201,14 @@ class TestRegisterEndpoint:
         from app.main import app
 
         with patch("app.routers.auth.register_user", new_callable=AsyncMock) as mock_reg:
-            mock_reg.side_effect = ValueError("该手机号已注册")
+            mock_reg.side_effect = AppException(code=400, message="该手机号已注册")
             with patch("app.routers.auth.get_db"):
                 client = TestClient(app)
                 response = client.post(
                     "/api/v1/auth/register",
                     json={"phone": "13800138000", "code": "123456"},
                 )
-        assert response.status_code == 200
+        assert response.status_code == 400
         body = response.json()
         assert body["code"] == 400
         assert body["message"] == "该手机号已注册"
@@ -254,14 +251,14 @@ class TestLoginEndpoint:
         from app.main import app
 
         with patch("app.routers.auth.login_user", new_callable=AsyncMock) as mock_login:
-            mock_login.side_effect = ValueError("验证码无效")
+            mock_login.side_effect = AppException(code=400, message="验证码无效")
             with patch("app.routers.auth.get_db"):
                 client = TestClient(app)
                 response = client.post(
                     "/api/v1/auth/login",
                     json={"phone": "13800138000", "code": "000000"},
                 )
-        assert response.status_code == 200
+        assert response.status_code == 400
         body = response.json()
         assert body["code"] == 400
         assert body["message"] == "验证码无效"
@@ -271,14 +268,14 @@ class TestLoginEndpoint:
         from app.main import app
 
         with patch("app.routers.auth.login_user", new_callable=AsyncMock) as mock_login:
-            mock_login.side_effect = ValueError("该手机号未注册")
+            mock_login.side_effect = AppException(code=400, message="该手机号未注册")
             with patch("app.routers.auth.get_db"):
                 client = TestClient(app)
                 response = client.post(
                     "/api/v1/auth/login",
                     json={"phone": "13800138000", "code": "123456"},
                 )
-        assert response.status_code == 200
+        assert response.status_code == 400
         body = response.json()
         assert body["code"] == 400
         assert body["message"] == "该手机号未注册"

@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Card, Form, Input, Button, Typography, message, Divider } from 'antd'
 import { MobileOutlined, SafetyOutlined, UserAddOutlined } from '@ant-design/icons'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
+import { sendSmsCode } from '../api/auth'
 import { LogoIcon, HerbLeafIcon, WaveDecoration } from '../assets/icons'
 
 const { Title, Text } = Typography
@@ -12,6 +13,31 @@ export default function Register() {
   const { register } = useAuth()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [countdown, setCountdown] = useState(0)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [form] = Form.useForm()
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [])
+
+  const handleSendCode = useCallback(async () => {
+    try {
+      const phone = form.getFieldValue('phone')
+      await form.validateFields(['phone'])
+      await sendSmsCode(phone)
+      message.success('验证码已发送')
+      setCountdown(60)
+      timerRef.current = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) { if (timerRef.current) clearInterval(timerRef.current); return 0 }
+          return prev - 1
+        })
+      }, 1000)
+    } catch (err: any) {
+      if (err?.message) message.error(err.message)
+    }
+  }, [form])
 
   const handleSubmit = async (values: { phone: string; code: string }) => {
     setLoading(true)
@@ -53,7 +79,7 @@ export default function Register() {
             <Text type="secondary">加入草木沈塘，开启健康之旅</Text>
           </div>
 
-          <Form layout="vertical" onFinish={handleSubmit} size="large">
+          <Form form={form} layout="vertical" onFinish={handleSubmit} size="large">
             <Form.Item name="phone" rules={[
               { required: true, message: '请输入手机号' },
               { pattern: /^\d{11}$/, message: '手机号须为 11 位数字' },
@@ -63,7 +89,7 @@ export default function Register() {
 
             <Form.Item name="code" rules={[{ required: true, message: '请输入验证码' }]}>
               <Input prefix={<SafetyOutlined style={{ color: '#2c6b4f' }} />} placeholder="请输入验证码" style={{ borderRadius: 10, height: 48 }}
-                suffix={<Button type="link" size="small" style={{ padding: 0, fontSize: 13 }}>获取验证码</Button>} />
+                suffix={<Button type="link" size="small" disabled={countdown > 0} onClick={handleSendCode} style={{ padding: 0, fontSize: 13 }}>{countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}</Button>} />
             </Form.Item>
 
             <Form.Item style={{ marginBottom: 16 }}>

@@ -1,10 +1,16 @@
 """FastAPI application entry point."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.exceptions import AppException
+from app.middleware.logging import RequestLoggingMiddleware
+from app.middleware.rate_limit import RateLimitMiddleware
+from app.redis import close_redis, init_redis
 from app.routers.admin.compliance import router as admin_compliance_router
 from app.routers.admin.consultations import router as admin_consultations_router
 from app.routers.admin.diagnosis_logs import router as admin_diagnosis_logs_router
@@ -25,10 +31,18 @@ from app.schemas.common import ApiResponse
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
+
+    @asynccontextmanager
+    async def lifespan(application: FastAPI):  # noqa: ARG001
+        await init_redis()
+        yield
+        await close_redis()
+
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
         debug=settings.debug,
+        lifespan=lifespan,
     )
 
     # CORS middleware
@@ -39,6 +53,19 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Request logging middleware
+    app.add_middleware(RequestLoggingMiddleware)
+
+    # API rate limiting middleware
+    app.add_middleware(RateLimitMiddleware)
+
+    @app.exception_handler(AppException)
+    async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
+        return JSONResponse(
+            status_code=exc.code,
+            content=ApiResponse(code=exc.code, message=exc.message).model_dump(),
+        )
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:

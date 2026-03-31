@@ -10,6 +10,7 @@ from app.models.cart import CartItem
 from app.models.prompt_template import PromptTemplate
 from app.models.compliance_word import ComplianceWord
 from app.models.stock_log import StockLog
+from app.models.sms_code_temp import SmsCodeTemp
 
 __all__ = [
     "User",
@@ -23,4 +24,5 @@ __all__ = [
     "PromptTemplate",
     "ComplianceWord",
     "StockLog",
+    "SmsCodeTemp",
 ]

@@ -16,8 +16,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.middleware.auth import get_current_user
 from app.models.user import User
+from app.schemas.auth import SetPasswordRequest
 from app.schemas.common import ApiResponse, PaginatedResponse, PaginationParams
 from app.schemas.admin_user import AdminUserItem
+from app.services.auth_service import set_admin_password
 
 router = APIRouter(prefix="/api/v1/admin/users", tags=["管理后台-用户管理"])
 
@@ -104,3 +106,22 @@ async def disable_user(
     )
 
     return ApiResponse(message="用户已禁用")
+
+
+@router.post("/set-password", response_model=ApiResponse)
+async def set_password(
+    req: SetPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_admin_user),
+) -> ApiResponse:
+    """Set or change admin password.
+
+    Requires admin authentication.
+
+    Requirements:
+    - 1.4: First-time password setup with bcrypt (cost >= 12)
+    - 1.5: Password change requires old password verification
+    - 1.6: Password length 6-32 characters
+    """
+    await set_admin_password(db, current_user, req.password, req.old_password)
+    return ApiResponse(message="密码设置成功")

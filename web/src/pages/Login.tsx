@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Card, Form, Input, Button, Typography, Space, message, Divider } from 'antd'
 import { MobileOutlined, SafetyOutlined, LoginOutlined } from '@ant-design/icons'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
+import { sendSmsCode } from '../api/auth'
 import { LogoIcon, WaveDecoration, HerbLeafIcon } from '../assets/icons'
 
 const { Title, Text, Paragraph } = Typography
@@ -13,6 +14,31 @@ export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const [loading, setLoading] = useState(false)
+  const [countdown, setCountdown] = useState(0)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [form] = Form.useForm()
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [])
+
+  const handleSendCode = useCallback(async () => {
+    try {
+      const phone = form.getFieldValue('phone')
+      await form.validateFields(['phone'])
+      await sendSmsCode(phone)
+      message.success('验证码已发送')
+      setCountdown(60)
+      timerRef.current = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) { if (timerRef.current) clearInterval(timerRef.current); return 0 }
+          return prev - 1
+        })
+      }, 1000)
+    } catch (err: any) {
+      if (err?.message) message.error(err.message)
+    }
+  }, [form])
 
   const handleSubmit = async (values: { phone: string; code: string }) => {
     setLoading(true)
@@ -66,7 +92,7 @@ export default function Login() {
             <Text type="secondary">传承本草智慧，守护自然健康</Text>
           </div>
 
-          <Form layout="vertical" onFinish={handleSubmit} size="large">
+          <Form form={form} layout="vertical" onFinish={handleSubmit} size="large">
             <Form.Item
               name="phone"
               rules={[
@@ -91,8 +117,14 @@ export default function Login() {
                 placeholder="请输入验证码"
                 style={{ borderRadius: 10, height: 48 }}
                 suffix={
-                  <Button type="link" size="small" style={{ padding: 0, fontSize: 13 }}>
-                    获取验证码
+                  <Button
+                    type="link"
+                    size="small"
+                    disabled={countdown > 0}
+                    onClick={handleSendCode}
+                    style={{ padding: 0, fontSize: 13 }}
+                  >
+                    {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
                   </Button>
                 }
               />

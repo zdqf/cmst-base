@@ -26,6 +26,9 @@ class User(Base):
     is_admin: Mapped[bool] = mapped_column(
         nullable=False, server_default="false"
     )
+    password_hash: Mapped[str | None] = mapped_column(
+        String(128), nullable=True  # nullable: 普通用户无需密码
+    )
     last_login_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
